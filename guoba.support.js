@@ -28,7 +28,7 @@ function saveCfg(data) {
   fs.writeFileSync(cfgPath, JSON.stringify(merged, null, 2))
 }
 
-export function supportGuoba() {
+export const supportGuoba = () => {
   return {
     pluginInfo: {
       name: 'example-box',
