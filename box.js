@@ -31,7 +31,14 @@ function loadCfg() {
   }
 }
 
-const cfg = loadCfg()
+function getCfg() {
+  try {
+    const raw = fs.readFileSync(cfgPath, 'utf8')
+    return JSON.parse(raw)
+  } catch { return { ...DEFAULT_CFG } }
+}
+
+loadCfg()
 
 const FIELD_MAPPING = [
   { key: 'user_id', label: 'QQ号', src: 's' },
@@ -140,7 +147,8 @@ function fmtYear(ts) {
 }
 
 function transformFields(sInfo, mInfo) {
-  const enabled = new Set(cfg.display_options.map(l => LABEL_TO_KEY[l]).filter(Boolean))
+  const _cfg = getCfg()
+  const enabled = new Set(_cfg.display_options.map(l => LABEL_TO_KEY[l]).filter(Boolean))
   const lines = []
 
   for (const fd of FIELD_MAPPING) {
@@ -228,6 +236,7 @@ export class box extends plugin {
 
   async boxCommand(e) {
     if (!e.isGroup) return false
+    const _cfg = getCfg()
 
     const targets = this.getTargets(e)
     if (!targets.length) return false
@@ -237,11 +246,11 @@ export class box extends plugin {
         e.reply('不能开盒机器人自己')
         continue
       }
-      if (cfg.protect_ids.includes(tid) && tid !== String(e.user_id)) {
+      if (_cfg.protect_ids.includes(tid) && tid !== String(e.user_id)) {
         e.reply('该用户在保护名单中')
         continue
       }
-      if (cfg.only_admin && !e.isMaster && tid !== String(e.user_id)) {
+      if (_cfg.only_admin && !e.isMaster && tid !== String(e.user_id)) {
         e.reply('仅管理员可开盒他人')
         continue
       }
@@ -277,8 +286,8 @@ export class box extends plugin {
         })
 
         if (img) {
-          if (cfg.recall_time > 0) {
-            e.reply(img, false, { recallMsg: cfg.recall_time })
+          if (_cfg.recall_time > 0) {
+            e.reply(img, false, { recallMsg: _cfg.recall_time })
           } else {
             e.reply(img)
           }
@@ -312,13 +321,14 @@ export class autoBox extends plugin {
   }
 
   async accept(e) {
+    const _cfg = getCfg()
     const uid = String(e.user_id)
     if (uid === String(e.self_id)) return false
     if (!e.group_id) return false
     const gid = String(e.group_id)
-    if (cfg.autobox.white_groups.length && !cfg.autobox.white_groups.includes(gid)) return false
-    if (!cfg.autobox.enter) return false
-    if (cfg.protect_ids.includes(uid)) return false
+    if (_cfg.autobox.white_groups.length && !_cfg.autobox.white_groups.includes(gid)) return false
+    if (!_cfg.autobox.enter) return false
+    if (_cfg.protect_ids.includes(uid)) return false
 
     try {
       const sInfo = await e.bot.sendApi('get_stranger_info', { user_id: Number(uid), no_cache: true })
@@ -344,8 +354,8 @@ export class autoBox extends plugin {
       })
 
       if (img) {
-        if (cfg.recall_time > 0) {
-          e.reply(img, false, { recallMsg: cfg.recall_time })
+        if (_cfg.recall_time > 0) {
+          e.reply(img, false, { recallMsg: _cfg.recall_time })
         } else {
           e.reply(img)
         }
@@ -371,13 +381,14 @@ export class autoBoxExit extends plugin {
   }
 
   async accept(e) {
+    const _cfg = getCfg()
     const uid = String(e.user_id)
     if (uid === String(e.self_id)) return false
     if (!e.group_id) return false
     const gid = String(e.group_id)
-    if (cfg.autobox.white_groups.length && !cfg.autobox.white_groups.includes(gid)) return false
-    if (!cfg.autobox.exit) return false
-    if (cfg.protect_ids.includes(uid)) return false
+    if (_cfg.autobox.white_groups.length && !_cfg.autobox.white_groups.includes(gid)) return false
+    if (!_cfg.autobox.exit) return false
+    if (_cfg.protect_ids.includes(uid)) return false
 
     try {
       const sInfo = await e.bot.sendApi('get_stranger_info', { user_id: Number(uid), no_cache: true })
@@ -399,8 +410,8 @@ export class autoBoxExit extends plugin {
       })
 
       if (img) {
-        if (cfg.recall_time > 0) {
-          e.reply(img, false, { recallMsg: cfg.recall_time })
+        if (_cfg.recall_time > 0) {
+          e.reply(img, false, { recallMsg: _cfg.recall_time })
         } else {
           e.reply(img)
         }
