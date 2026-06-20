@@ -39,7 +39,7 @@ export const supportGuoba = () => {
       link: 'https://github.com/Zhalslar/astrbot_plugin_box',
       isV3: true,
       isV2: false,
-      showInMenu: false,
+      showInMenu: 'auto',
     },
     configInfo: {
       schemas: [
