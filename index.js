@@ -273,7 +273,7 @@ export class box extends plugin {
         const textColor = randTextColor()
         const bgColor = '#f0f2f5'
 
-        const fontDir = path.join(_path, 'plugins', 'example', 'box_res')
+        const fontDir = path.join(_path, 'plugins', 'box-plugin', 'box_res')
         const img = await puppeteer.screenshot('box', {
           tplFile: path.join(fontDir, 'template.html'),
           avatarUrl: avatarDataUrl || '',
@@ -341,7 +341,7 @@ export class autoBox extends plugin {
       if (!lines.length) return false
 
       const avatarDataUrl = await getAvatar(uid)
-      const fontDir = path.join(_path, 'plugins', 'example', 'box_res')
+      const fontDir = path.join(_path, 'plugins', 'box-plugin', 'box_res')
       const img = await puppeteer.screenshot('box', {
         tplFile: path.join(fontDir, 'template.html'),
         avatarUrl: avatarDataUrl || '',
@@ -397,7 +397,7 @@ export class autoBoxExit extends plugin {
       if (!lines.length) return false
 
       const avatarDataUrl = await getAvatar(uid)
-      const fontDir = path.join(_path, 'plugins', 'example', 'box_res')
+      const fontDir = path.join(_path, 'plugins', 'box-plugin', 'box_res')
       const img = await puppeteer.screenshot('box', {
         tplFile: path.join(fontDir, 'template.html'),
         avatarUrl: avatarDataUrl || '',
