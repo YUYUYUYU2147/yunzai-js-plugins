@@ -65,19 +65,6 @@ async function getSuffix(cfg) {
   return await loadModelSuffix(name)
 }
 
-function getTaskGroups(cfg) {
-  let all = []
-  for (let [gid, info] of Bot.gl) {
-    try {
-      let uid = info?.bot_id
-      if (!uid) continue
-      let member = Bot.pickMember(gid, uid)
-      if (member?.role) all.push(gid)
-    } catch {}
-  }
-  return lodash.difference(all, cfg.notGroup || [])
-}
-
 export class autoGroupName extends plugin {
   constructor() {
     super({
@@ -188,37 +175,43 @@ export class autoGroupName extends plugin {
   async CardTask(e) {
     let cfg = this.appConfig
     if (!cfg.enable && !e) return
-    let groups = getTaskGroups(cfg)
     let suffix = cfg.userSuffix || await getSuffix(cfg)
     if (!suffix) { if (e) e.reply('未获取到后缀内容'); return }
-    let count = 0, errs = []
-    for (let gid of groups) {
-      let info = Bot.gl.get(gid)
-      let uid = info?.bot_id
-      if (!uid) continue
-      let botNick = '摸鱼ing'
-      try { botNick = Bot.pickMember(gid, uid)?.nickname || Bot[uid]?.info?.nickname || botNick } catch {}
-      let prefix = cfg.nickname || botNick
-      let card = `${prefix}｜${suffix}`
-      try {
-        let member = Bot.pickMember(gid, uid)
-        if (!member) continue
-        if (member.card === card) continue
-        let group = Bot.pickGroup(gid)
-        if (!group?.setCard) continue
-        await group.setCard(uid, card)
-        count++
-        await new Promise(r => setTimeout(r, 2000))
-      } catch (err) {
-        let msg = err?.message || ''
-        let retcode = err?.error?.retcode
-        if (msg.includes('未生效')) { count++; continue }
-        if (retcode && !msg) msg = `retcode=${retcode}`
-        logger.error(`[自动群名片] ${gid} 设置失败: ${msg}`)
-        errs.push(`${gid}: ${msg}`)
+    let count = 0, total = 0, errs = []
+    for (const bot_id of Bot.uin) {
+      const bot = Bot.bots[bot_id]
+      if (!bot) continue
+      for (const [gid] of bot.gl || []) {
+        if (cfg.notGroup?.includes(gid)) continue
+        try {
+          const member = bot.pickMember(gid, bot_id)
+          if (!member?.role) continue
+        } catch { continue }
+        total++
+        let botNick = '摸鱼ing'
+        try { botNick = bot.pickMember(gid, bot_id)?.nickname || bot.info?.nickname || botNick } catch {}
+        let prefix = cfg.nickname || botNick
+        let card = `${prefix}｜${suffix}`
+        try {
+          let group = bot.pickGroup(gid)
+          if (!group?.setCard) continue
+          let member = bot.pickMember(gid, bot_id)
+          if (!member) continue
+          if (member.card === card) continue
+          await group.setCard(bot_id, card)
+          count++
+          await new Promise(r => setTimeout(r, 2000))
+        } catch (err) {
+          let msg = err?.message || ''
+          let retcode = err?.error?.retcode
+          if (msg.includes('未生效')) { count++; continue }
+          if (retcode && !msg) msg = `retcode=${retcode}`
+          logger.error(`[自动群名片] ${bot_id} ${gid} 设置失败: ${msg}`)
+          errs.push(`${gid}: ${msg}`)
+        }
       }
     }
-    logger.info(`[自动群名片] 已更新 ${count}/${groups.length} 个群的名片`)
-    if (e) e.reply(`已更新 ${count}/${groups.length} 个群的名片\n当前后缀：${suffix}\n${errs.length ? '失败：\n' + errs.join('\n') : ''}`)
+    logger.info(`[自动群名片] 已更新 ${count}/${total} 个群的名片`)
+    if (e) e.reply(`已更新 ${count}/${total} 个群的名片\n当前后缀：${suffix}\n${errs.length ? '失败：\n' + errs.join('\n') : ''}`)
   }
 }
